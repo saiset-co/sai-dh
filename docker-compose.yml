@@ -1,0 +1,25 @@
+services:
+  sai-dh:
+    build: .
+    image: sai-dh:0.1.0
+    restart: unless-stopped
+    environment:
+      SAI_DH_HOST: 0.0.0.0
+      SAI_DH_PORT: 8083
+      SAI_DH_TOKEN: ${SAI_DH_TOKEN:-}
+      SAI_DH_AUTH_MODE: ${SAI_DH_AUTH_MODE:-token}
+      SAI_DH_AUTH_URL: ${SAI_DH_AUTH_URL:-}
+      SAI_DH_AUTH_ALLOW_HTTP: ${SAI_DH_AUTH_ALLOW_HTTP:-false}
+      SAI_DH_AUTH_TIMEOUT: ${SAI_DH_AUTH_TIMEOUT:-3s}
+    ports:
+      - "127.0.0.1:${SAI_DH_PORT:-8083}:8083"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: [CMD, /app/sai-dh, -healthcheck]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

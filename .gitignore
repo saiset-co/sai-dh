@@ -1,0 +1,14 @@
+.env
+config.local.yml
+bin/
+release-manifest.json
+coverage.out
+*.prof
+*.test
+*.log
+vendor/
+__pycache__/
+
+# Local conversation context
+HANDOFF.md
+CHAT_HISTORY.md

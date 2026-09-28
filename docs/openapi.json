@@ -1,0 +1,930 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "sai-dh",
+    "version": "0.1.0",
+    "description": "Trusted stateless crypto endpoint. HTTP callers submit secrets to this server. For messenger E2EE execute pkg/dh on the device. This is not an authenticated handshake, ratchet, replay manager or OTP implementation."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8083",
+      "description": "Local development; use HTTPS between hosts"
+    }
+  ],
+  "security": [
+    {
+      "BearerToken": []
+    },
+    {
+      "SaiToken": []
+    }
+  ],
+  "paths": {
+    "/api/v1/capabilities": {
+      "get": {
+        "summary": "Supported crypto primitives and limitations",
+        "operationId": "api_v1_capabilities",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/keys/generate": {
+      "post": {
+        "summary": "Generate a P-256 key pair",
+        "operationId": "api_v1_keys_generate",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyPairResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/salts/generate": {
+      "post": {
+        "summary": "Generate a shared session salt",
+        "operationId": "api_v1_salts_generate",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaltResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/keys/derive": {
+      "post": {
+        "summary": "Derive an AES-256 key from ECDH with HKDF",
+        "operationId": "api_v1_keys_derive",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeriveResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeriveRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/encrypt": {
+      "post": {
+        "summary": "Encrypt with a random GCM nonce",
+        "operationId": "api_v1_encrypt",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EncryptRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/decrypt": {
+      "post": {
+        "summary": "Authenticate and decrypt an envelope",
+        "operationId": "api_v1_decrypt",
+        "responses": {
+          "200": {
+            "description": "Success; secret-bearing responses must not be cached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecryptResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or failed decryption",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid credentials or denied permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Encoded HTTP request exceeds 4 MiB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "SAI/gateway request rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Operation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authorization service unavailable; access denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecryptRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerToken": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "SaiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Token"
+      }
+    },
+    "schemas": {
+      "EmptyRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {}
+      },
+      "KeyPairResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "suite": {
+            "type": "string"
+          },
+          "private_key": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "public_key": {
+            "type": "string",
+            "minLength": 130,
+            "maxLength": 130,
+            "pattern": "^04[0-9a-fA-F]{128}$"
+          },
+          "fingerprint": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        },
+        "required": [
+          "suite",
+          "private_key",
+          "public_key",
+          "fingerprint"
+        ]
+      },
+      "SaltResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "salt": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        },
+        "required": [
+          "salt"
+        ]
+      },
+      "DeriveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "private_key": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "public_key": {
+            "type": "string",
+            "minLength": 130,
+            "maxLength": 130,
+            "pattern": "^04[0-9a-fA-F]{128}$"
+          },
+          "salt": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "context": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "description": "Exact context bytes; maximum 1024 UTF-8 bytes. Use distinct agreed contexts per direction/purpose."
+          }
+        },
+        "required": [
+          "private_key",
+          "public_key",
+          "salt",
+          "context"
+        ]
+      },
+      "DeriveResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "suite": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        },
+        "required": [
+          "suite",
+          "key"
+        ]
+      },
+      "EncryptRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "message": {
+            "type": "string",
+            "default": "",
+            "maxLength": 1048576,
+            "description": "Maximum 1048576 UTF-8 bytes; the encoded HTTP request must also fit 4 MiB."
+          },
+          "aad": {
+            "type": "string",
+            "default": "",
+            "maxLength": 4096,
+            "description": "Maximum 4096 UTF-8 bytes."
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "Envelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "algorithm": {
+            "type": "string",
+            "enum": [
+              "AES-256-GCM"
+            ]
+          },
+          "ciphertext": {
+            "type": "string",
+            "minLength": 56,
+            "maxLength": 2097208,
+            "pattern": "^[0-9a-fA-F]+$",
+            "description": "Hex(nonce[12] || ciphertext || GCM tag[16]); even hex length required."
+          }
+        },
+        "required": [
+          "version",
+          "algorithm",
+          "ciphertext"
+        ]
+      },
+      "DecryptRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 64,
+            "maxLength": 64,
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "envelope": {
+            "$ref": "#/components/schemas/Envelope"
+          },
+          "aad": {
+            "type": "string",
+            "default": "",
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "key",
+          "envelope"
+        ]
+      },
+      "DecryptResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plaintext": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plaintext"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ]
+      },
+      "CapabilitiesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "service": {
+            "type": "string"
+          },
+          "suite": {
+            "type": "string"
+          },
+          "stateless": {
+            "type": "boolean"
+          },
+          "max_message_bytes": {
+            "type": "integer"
+          },
+          "peer_authentication": {
+            "type": "boolean"
+          },
+          "replay_protection": {
+            "type": "boolean"
+          },
+          "one_time_pad": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "service",
+          "suite",
+          "stateless",
+          "max_message_bytes",
+          "peer_authentication",
+          "replay_protection",
+          "one_time_pad"
+        ]
+      }
+    }
+  }
+}

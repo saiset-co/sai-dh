@@ -1,0 +1,73 @@
+name: sai-dh
+version: 0.1.0
+
+# SAI_DH_HOST and SAI_DH_PORT override these two values before server startup.
+server:
+  http:
+    host: 127.0.0.1
+    port: 8083
+    read_timeout: 10
+    write_timeout: 10
+    idle_timeout: 30
+  tls:
+    enabled: false
+
+logger:
+  type: default
+  level: info
+  config:
+    format: json
+    output: stdout
+
+# No tokens or cryptographic keys belong in this file.
+auth_providers:
+  token:
+    params: {}
+  basic:
+    params: {}
+
+middlewares:
+  enabled: true
+  recovery:
+    enabled: true
+    weight: 5
+    params:
+      stack_trace: false
+  logging:
+    enabled: false
+  auth:
+    enabled: false
+  cache:
+    enabled: false
+  compression:
+    enabled: false
+  cors:
+    enabled: false
+  body_limit:
+    enabled: true
+    weight: 10
+    params:
+      max_body_size: 4194304
+  rate_limit:
+    enabled: true
+    weight: 15
+    params:
+      requests_per_minute: 300
+
+health:
+  enabled: true
+docs:
+  enabled: true
+  path: /docs
+metrics:
+  enabled: false
+cache:
+  enabled: false
+database:
+  enabled: false
+actions:
+  enabled: false
+cron:
+  enabled: false
+clients:
+  enabled: false

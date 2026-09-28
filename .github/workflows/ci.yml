@@ -1,0 +1,44 @@
+name: sai-dh checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ['1.24.11', '1.27.1']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: false
+      - name: Resolve dependencies
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+      - name: Format
+        run: test -z "$(gofmt -l cmd internal pkg types examples)"
+      - name: Unit tests and race detector
+        run: go test -race -count=1 ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Fuzz malformed key material
+        run: go test ./pkg/dh -run '^$' -fuzz '^FuzzDeriveKey$' -fuzztime=10s -parallel=2
+      - name: Fuzz invalid ciphertext
+        run: go test ./pkg/dh -run '^$' -fuzz '^FuzzDecrypt$' -fuzztime=10s -parallel=2
+      - name: Build
+        run: make build
+      - name: Actual SAI service integration
+        run: python3 scripts/smoke.py --start ./bin/sai-dh
+      - name: Local library example
+        run: go run ./examples/local
+      - name: Container build
+        if: matrix.go-version == '1.27.1'
+        run: docker build -t sai-dh:ci .

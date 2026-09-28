@@ -1,0 +1,9 @@
+.git
+.env
+bin
+coverage.out
+*.prof
+*.log
+config.local.yml
+vendor
+__pycache__
